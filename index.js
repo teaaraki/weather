@@ -11,24 +11,25 @@ app.get("/", function (req, res) {
   res.sendFile(__dirname + "/index.html");
 });
 
-//invoked after hitting go in the html form
+//coding for form submission
 app.post("/", function (req, res) {
-  // takes in the zip from the html form, display in // console. Takes in as string, ex. for zip 02139
-  var zip = String(req.body.zipInput);
-  console.log(req.body.zipInput);
+  var city = String(req.body.cityInput);
+  console.log(req.body.cityInput);
 
-  //build up the URL for the JSON query, API Key is // secret and needs to be obtained by signup
   const units = "imperial";
-  const apiKey = "95d99161b648050e7c09e73645f7314d";
+
+  //AI used to help generate code so the API key is private
+  const apiKey = process.env.API_KEY || "95d99161b648050e7c09e73645f7314d";
+
   const url =
-    "https://api.openweathermap.org/data/2.5/weather?zip=" +
-    zip +
+    "https://api.openweathermap.org/data/2.5/weather?q=" +
+    city +
     "&units=" +
     units +
     "&APPID=" +
     apiKey;
 
-  // this gets the data from Open WeatherPI
+  // gets from open WeatherAPI data
   https.get(url, function (response) {
     console.log(response.statusCode);
 
@@ -36,22 +37,24 @@ app.post("/", function (req, res) {
     response.on("data", function (data) {
       const weatherData = JSON.parse(data);
       const temp = weatherData.main.temp;
+      const humidity = weatherData.main.humidity;
+      const windSpeed = weatherData.wind.speed;
       const city = weatherData.name;
+      const latitude = weatherData.coord.lat;
+      const longitude = weatherData.coord.lon;
       const weatherDescription = weatherData.weather[0].description;
       const icon = weatherData.weather[0].icon;
       const imageURL = "http://openweathermap.org/img/wn/" + icon + "@2x.png";
 
-      // displays the output of the results
-      res.write("<h1> The weather is " + weatherDescription + "<h1>");
-      res.write(
-        "<h2>The Temperature in " +
-          city +
-          " " +
-          zip +
-          " is " +
-          temp +
-          " Degrees Fahrenheit<h2>"
-      );
+      // displays the output of the results from open weather API
+      res.write("<h1> The weather in " + city + "</h1>");
+      //minor error with quote brackets for weather description, fixed with AI
+      res.write("<h2>" + weatherDescription + "</h2>");
+      res.write("<p>Temperature: " + temp + " F</p>");
+      res.write("<p>Wind Speed: " + windSpeed + " mph</p>");
+      res.write("Humidity: " + humidity + "%</p>");
+      res.write("<p>Latitude: " + latitude + "</p>");
+      res.write("<p>Longitude: " + longitude + "</p>");
       res.write("<img src=" + imageURL + ">");
       res.send();
     });
